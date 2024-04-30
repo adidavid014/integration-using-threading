@@ -3,13 +3,14 @@
 #include <pthread.h>
 #include <vector>
 
+using namespace std;
+
 struct ThreadData {
     double lowerBound;
     double upperBound;
     int iterations;
     double result;
 };
-
 
 double sinx(double x) {
     return sin(x);
@@ -28,11 +29,9 @@ void* monteCarloEstimate(void* arg){
     pthread_exit(NULL);
 }
 
-
 double parallelMonteCarloEstimate(double lowBound, double upBound, int iterations, int numThreads) {
-    std::vector<pthread_t> threads(numThreads);
-    std::vector<ThreadData> threadData(numThreads);
-
+    vector<pthread_t> threads(numThreads);
+    vector<ThreadData> threadData(numThreads);
     double totalResult = 0.0;
     double range = (upBound - lowBound) / numThreads;
 
@@ -42,7 +41,7 @@ double parallelMonteCarloEstimate(double lowBound, double upBound, int iteration
         threadData[i].iterations = iterations / numThreads;
 
         if(pthread_create(&threads[i], NULL, monteCarloEstimate, (void*)&threadData[i])) {
-            std::cerr << "Error creating thread" << std::endl;
+            cerr << "Error creating thread" << endl;
             return 0.0;
         }
     }
@@ -55,12 +54,12 @@ double parallelMonteCarloEstimate(double lowBound, double upBound, int iteration
 }
 
 int main(int argc, char* argv[]) {
-    double lower = std::stod(argv[1]);
-    double upper = std::stod(argv[2]);
-    double iterations = std::stod(argv[3]);
-    int num_threads = std::stoi(argv[4]);
-    
+    double lower = stod(argv[1]);
+    double upper = stod(argv[2]);
+    double iterations = stod(argv[3]);
+    int num_threads = stoi(argv[4]);
+
     double estimate = parallelMonteCarloEstimate(lower, upper, iterations, num_threads);
-    std::cout << "Estimate for " << lower << " -> " << upper << " is " << estimate << " (" << iterations << " iterations)" << std::endl;
+    cout << estimate << endl;
     return 0;
 }
