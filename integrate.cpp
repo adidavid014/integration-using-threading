@@ -3,6 +3,7 @@
 #include <pthread.h>
 #include <vector>
 #include <chrono>
+#include <random>
 
 using namespace std;
 
@@ -20,8 +21,12 @@ double sinx(double x) {
 void* monteCarloEstimate(void* arg){
     ThreadData* data = (ThreadData*)arg;
     double totalSum = 0.0;
+    random_device rd;
+    mt19937 gen(rd()); //better use of random for threads
+    uniform_real_distribution<> dis(data->lowerBound, data->upperBound);
+
     for (int i = 0; i < data->iterations; ++i) {
-        double randNum = data->lowerBound + (static_cast<double>(rand()) / RAND_MAX) * (data->upperBound - data->lowerBound);
+        double randNum = dis(gen);
         double functionVal = sinx(randNum);
         totalSum += functionVal;
     }
@@ -55,15 +60,18 @@ double parallelMonteCarloEstimate(double lowBound, double upBound, int iteration
 }
 
 int main(int argc, char* argv[]) {
+    if(argc != 5){
+        cerr << "Invalid number of inputs" << endl;
+    }
     double lower = stod(argv[1]);
     double upper = stod(argv[2]);
     double iterations = stod(argv[3]);
     int num_threads = stoi(argv[4]);
 
-    auto start_tp = std::chrono::steady_clock::now();
+    auto start = std::chrono::steady_clock::now();
     double estimate = parallelMonteCarloEstimate(lower, upper, iterations, num_threads);
-    auto stop_tp = chrono::steady_clock::now();
-    auto duration = chrono::duration<double>(stop_tp - start_tp);
-    cout << estimate << endl;
+    auto stop = chrono::steady_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+    std::cout << duration.count() << std::endl;
     return 0;
 }
