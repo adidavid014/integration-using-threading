@@ -1,52 +1,66 @@
 #include <iostream>
-#include <mutex>
-#include <thread>
+#include <cmath>
+#include <pthread.h>
 #include <vector>
-#include <functional>
-using namespace std;
+
+struct ThreadData {
+    double lowerBound;
+    double upperBound;
+    int iterations;
+    double result;
+};
 
 
-double sinx(double x){
-    if(x == 0.0){
-        return 1.0;
-    }
-    return sin(x)/x;
+double sinx(double x) {
+    return sin(x);
 }
 
-double trapRule(function<double(double)>& f, double a, double b, int n){
-    double width = (b-a)/n;
-    double sum = 0.5 * (f(a) + f(b));
-    for(int i = 1; i < n; i++){
-        sum += f(a + i * h);
+void* monteCarloEstimate(void* arg){
+    ThreadData* data = (ThreadData*)arg;
+    double totalSum = 0.0;
+    for (int i = 0; i < data->iterations; ++i) {
+        double randNum = data->lowerBound + (static_cast<double>(rand()) / RAND_MAX) * (data->upperBound - data->lowerBound);
+        double functionVal = sinx(randNum);
+        totalSum += functionVal;
     }
-    return sum*h;
+
+    data->result = (data->upperBound - data->lowerBound) * totalSum / data->iterations;
+    pthread_exit(NULL);
 }
 
-void worker(function<double(double)>& f, double a, double b, int n_threads, int threadID, double& result){
-    double localRes = 0.0;
-    double range = (b-a)/n_threads;
-    double localA = a + threadID*range;
-    double localB = localA + range;
-    localRes = trapRule(f, localA, localB, n/n_threads);
-    lock_guard<mutex> guard(mu);
-    result+=localRes;
+
+double parallelMonteCarloEstimate(double lowBound, double upBound, int iterations, int numThreads) {
+    std::vector<pthread_t> threads(numThreads);
+    std::vector<ThreadData> threadData(numThreads);
+
+    double totalResult = 0.0;
+    double range = (upBound - lowBound) / numThreads;
+
+    for (int i = 0; i < numThreads; ++i) {
+        threadData[i].lowerBound = lowBound + i * range;
+        threadData[i].upperBound = (i == numThreads - 1) ? upBound : lowBound + (i + 1) * range;
+        threadData[i].iterations = iterations / numThreads;
+
+        if(pthread_create(&threads[i], NULL, monteCarloEstimate, (void*)&threadData[i])) {
+            std::cerr << "Error creating thread" << std::endl;
+            return 0.0;
+        }
+    }
+
+    for (int i = 0; i < numThreads; ++i) {
+        pthread_join(threads[i], NULL);
+        totalResult += threadData[i].result;
+    }
+    return totalResult;
 }
 
-int main(int argc, char *argv[]){
-    if(argc != 5){
-        cout << "Incorrect number of arguments";
-    }
-    double a = stod(argv[1]);
-    double b = stod(argv[2]);
-    int n = stoi(argv[3]);
-    int n_threads = stoi(argv[4]);
-
-    double result = 0.0;
-
-    vector<thread> threads; 
-
-    for(int i = 0; i < n_threads; i++){
-        threads.push_back(thread(worker, sinx, a, b, n, n_threads, i, ref(result)))
-    }
-
+int main(int argc, char* argv[]) {
+    double lower = std::stod(argv[1]);
+    double upper = std::stod(argv[2]);
+    double iterations = std::stod(argv[3]);
+    int num_threads = std::stoi(argv[4]);
+    
+    double estimate = parallelMonteCarloEstimate(lower, upper, iterations, num_threads);
+    std::cout << "Estimate for " << lower << " -> " << upper << " is " << estimate << " (" << iterations << " iterations)" << std::endl;
+    return 0;
 }
