@@ -22,6 +22,16 @@ double trapRule(function<double(double)>& f, double a, double b, int n){
     return sum*h;
 }
 
+void worker(function<double(double)>& f, double a, double b, int n_threads, int threadID, double& result){
+    double localRes = 0.0;
+    double range = (b-a)/n_threads;
+    double localA = a + threadID*range;
+    double localB = localA + range;
+    localRes = trapRule(f, localA, localB, n/n_threads);
+    lock_guard<mutex> guard(mu);
+    result+=localRes;
+}
+
 int main(int argc, char *argv[]){
     if(argc != 5){
         cout << "Incorrect number of arguments";
