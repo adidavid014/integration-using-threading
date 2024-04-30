@@ -2,6 +2,7 @@
 #include <cmath>
 #include <pthread.h>
 #include <vector>
+#include <chrono>
 
 using namespace std;
 
@@ -59,7 +60,10 @@ int main(int argc, char* argv[]) {
     double iterations = stod(argv[3]);
     int num_threads = stoi(argv[4]);
 
+    auto start_tp = std::chrono::steady_clock::now();
     double estimate = parallelMonteCarloEstimate(lower, upper, iterations, num_threads);
+    auto stop_tp = chrono::steady_clock::now();
+    auto duration = chrono::duration<double>(stop_tp - start_tp);
     cout << estimate << endl;
     return 0;
 }
