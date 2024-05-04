@@ -15,7 +15,7 @@ struct ThreadData {
 };
 
 double sinx(double x) {
-    return sin(x);
+    return sin(x)/x;
 }
 
 void* monteCarloEstimate(void* arg){
@@ -70,9 +70,9 @@ int main(int argc, char* argv[]) {
 
     auto start = std::chrono::steady_clock::now();
     double estimate = parallelMonteCarloEstimate(lower, upper, iterations, num_threads);
-    cout << estimate << endl;
+    //cout << estimate << endl;
     auto stop = chrono::steady_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-    //std::cout << duration.count() << std::endl;
+    std::cout << duration.count() << std::endl;
     return 0;
 }
