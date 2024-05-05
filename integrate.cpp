@@ -25,7 +25,7 @@ void* monteCarloEstimate(void* arg){
     mt19937 gen(rd()); //better use of random for threads
     uniform_real_distribution<> dis(data->lowerBound, data->upperBound);
 
-    for (int i = 0; i < data->iterations; ++i) {
+    for(int i = 0; i < data->iterations; ++i){
         double randNum = dis(gen);
         double functionVal = sinx(randNum);
         totalSum += functionVal;
@@ -65,14 +65,14 @@ int main(int argc, char* argv[]) {
     }
     double lower = stod(argv[1]);
     double upper = stod(argv[2]);
-    double iterations = stod(argv[3]);
+    long iterations = stol(argv[3]);
     int num_threads = stoi(argv[4]);
 
-    auto start = std::chrono::steady_clock::now();
+    //auto start = std::chrono::steady_clock::now();
     double estimate = parallelMonteCarloEstimate(lower, upper, iterations, num_threads);
-    //cout << estimate << endl;
-    auto stop = chrono::steady_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-    std::cout << duration.count() << std::endl;
-    return 0;
+    cout << estimate << endl;
+    // auto stop = chrono::steady_clock::now();
+    // auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+    //std::cout << duration.count() << std::endl;
+    //return 0;
 }
